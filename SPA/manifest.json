@@ -1,0 +1,30 @@
+{
+  "name": "LETY LOOK - Belleza Integral",
+  "short_name": "LETY LOOK",
+  "description": "App para agendar citas de manicura, pedicura, peluquería y tintura en LETY LOOK Belleza Integral",
+  "start_url": "cliente.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d45979",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

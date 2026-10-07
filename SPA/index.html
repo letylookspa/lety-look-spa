@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LETY LOOK | Sistema de Gestión de Spa & Belleza</title>
+    <meta name="description" content="Plataforma de gestión integral para LETY LOOK Spa. Control de citas, catálogo de servicios de manicura, pedicura, peluquería, tintura, horarios y profesionales.">
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css?v=5.1">
+    <!-- Firebase SDK (Cloud Database) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=5.0"></script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="img/logo.png" alt="LETY LOOK Logo" class="brand-logo-img" style="height: 52px; width: auto; object-fit: contain; border-radius: var(--radius-sm);">
+                <div class="brand-info">
+                    <h1 style="font-size: 1.3rem;">LETY LOOK</h1>
+                    <span>Belleza Integral</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-view="dashboard">
+                    <button id="nav-dashboard-btn" type="button">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Dashboard</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="agenda">
+                    <button id="nav-agenda-btn" type="button">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Agenda Diaria</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="appointments">
+                    <button id="nav-appointments-btn" type="button">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Citas & Reservas</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="services">
+                    <button id="nav-services-btn" type="button">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Servicios & Precios</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="staff">
+                    <button id="nav-staff-btn" type="button">
+                        <i class="fa-solid fa-user-tie"></i>
+                        <span>Profesionales & Turnos</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="clients">
+                    <button id="nav-clients-btn" type="button">
+                        <i class="fa-solid fa-address-book"></i>
+                        <span>Clientes Registrados</span>
+                    </button>
+                </li>
+                <li class="nav-item" data-view="settings">
+                    <button id="nav-settings-btn" type="button">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Configuración & Datos</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <a href="cliente.html" target="_blank" class="btn-gold" style="justify-content:center; text-align:center; padding:0.8rem; font-size:0.88rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Ver App Clientes</span>
+                </a>
+                <button id="sidebar-quick-booking-btn" class="quick-book-btn" type="button">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Agendar Cita Rápida</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-wrapper">
+            <!-- Top Navigation Bar -->
+            <header class="topbar">
+                <div class="page-title">
+                    <h2 id="current-view-title">Dashboard Ejecutivo</h2>
+                    <p id="current-view-subtitle">Resumen general y estado de citas del día</p>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="live-clock-badge">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="live-time-display">--:--:--</span>
+                    </div>
+
+                    <!-- Theme Switcher Palette Dropdown -->
+                    <div class="theme-selector-dropdown" style="position:relative;">
+                        <button id="btn-theme-switcher" class="btn-icon" title="Cambiar Tema de Color" type="button" style="background:#fff;">
+                            <i class="fa-solid fa-palette" style="color:var(--primary);"></i>
+                        </button>
+                        <div id="theme-dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); box-shadow:0 10px 25px rgba(0,0,0,0.15); padding:0.5rem; width:210px; z-index:1000; flex-direction:column; gap:0.25rem;">
+                            <button class="theme-option-btn" data-theme="default" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#d45979;"></span>
+                                <span>Rose Gold (Clásico)</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="turquoise" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#0891b2;"></span>
+                                <span>Turquesa LT</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="emerald" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#059669;"></span>
+                                <span>Emerald Luxury</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="royal" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#7c3aed;"></span>
+                                <span>Royal Violet</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="midnight" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#0f172a; border:1px solid #38bdf8;"></span>
+                                <span>Midnight Noir (Dark)</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="sunset" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#ea580c;"></span>
+                                <span>Sunset Amber</span>
+                            </button>
+                            <button class="theme-option-btn" data-theme="halloween" style="display:flex; align-items:center; gap:0.5rem; width:100%; padding:0.5rem 0.75rem; border:none; background:transparent; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:left; color:var(--text-main);">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#ff7518; border:1px solid #a855f7; box-shadow:0 0 6px rgba(255,117,24,0.6);"></span>
+                                <span>🎃 Halloween Spooky</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="topbar-sync-btn" class="btn-icon" title="Sincronizar Datos y Limpiar Caché" type="button" style="background:#fff;">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+
+                    <a href="cliente.html" target="_blank" class="btn-secondary" style="font-weight:700; color:var(--primary); border-color:var(--primary-light); background:var(--primary-light);">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                        <span>App Clientes</span>
+                    </a>
+
+                    <button id="topbar-new-appointment-btn" class="btn-primary" type="button">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Nueva Cita</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Dynamic Content Body -->
+            <div class="content-body">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="view-section active">
+                    <div class="kpi-grid">
+                        <div class="kpi-card kpi-rose">
+                            <div class="kpi-icon-wrap">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span>Citas de Hoy</span>
+                                <h3 id="kpi-today-count">0</h3>
+                                <p class="kpi-subtext" id="kpi-today-status-breakdown">0 confirmadas</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-gold">
+                            <div class="kpi-icon-wrap">
+                                <i class="fa-solid fa-coins"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span>Ingresos Estimados Hoy</span>
+                                <h3 id="kpi-today-revenue">$0</h3>
+                                <p class="kpi-subtext">Basado en citas del día</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-emerald">
+                            <div class="kpi-icon-wrap">
+                                <i class="fa-solid fa-spa"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span>Servicios Activos</span>
+                                <h3 id="kpi-services-count">0</h3>
+                                <p class="kpi-subtext">Manicura, Pedicura, Pelo y Color</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-blue">
+                            <div class="kpi-icon-wrap">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span>Especialistas Disponibles</span>
+                                <h3 id="kpi-staff-count">0</h3>
+                                <p class="kpi-subtext">Profesionales capacitados</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-columns">
+                        <!-- Today's Appointments -->
+                        <div class="dash-card">
+                            <div class="dash-card-header">
+                                <div>
+                                    <h3>Próximas Citas de Hoy</h3>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Atención programada para la jornada</p>
+                                </div>
+                                <button id="dash-view-all-appointments-btn" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">Ver Todas</button>
+                            </div>
+                            <div id="dash-today-appointments-list" class="today-list">
+                                <!-- Dynamic item list -->
+                            </div>
+                        </div>
+
+                        <!-- Service Category Distribution -->
+                        <div class="dash-card">
+                            <div class="dash-card-header">
+                                <div>
+                                    <h3>Demanda por Servicios</h3>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Distribución según categorías</p>
+                                </div>
+                            </div>
+                            <div id="dash-category-bars" class="category-bars">
+                                <!-- Dynamic category bars -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. AGENDA / CALENDAR VIEW -->
+                <section id="view-agenda" class="view-section">
+                    <div class="calendar-controls">
+                        <div class="calendar-nav">
+                            <button id="agenda-prev-day-btn" class="btn-icon" title="Día Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="agenda-current-date-label" class="current-date-label">Hoy</span>
+                            <button id="agenda-next-day-btn" class="btn-icon" title="Día Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+                            <button id="agenda-today-btn" class="btn-secondary" style="padding: 0.45rem 0.9rem;">Hoy</button>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="date" id="agenda-datepicker" class="form-control" style="width: auto; padding: 0.45rem 0.8rem;">
+                            <select id="agenda-staff-filter" class="filter-select">
+                                <option value="all">Todos los Profesionales</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid-wrap">
+                        <div id="timeline-schedule-container" class="timeline-schedule">
+                            <!-- Hours 08:00 to 20:00 rendered dynamically -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. APPOINTMENTS MANAGEMENT VIEW -->
+                <section id="view-appointments" class="view-section">
+                    <div class="table-filter-bar">
+                        <div class="search-input-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="appointments-search-input" placeholder="Buscar por cliente, teléfono o servicio...">
+                        </div>
+
+                        <div class="filter-group">
+                            <select id="appointments-status-filter" class="filter-select">
+                                <option value="all">Todos los Estados</option>
+                                <option value="confirmed">Confirmadas</option>
+                                <option value="pending">Pendientes</option>
+                                <option value="completed">Completadas</option>
+                                <option value="cancelled">Canceladas</option>
+                            </select>
+
+                            <select id="appointments-category-filter" class="filter-select">
+                                <option value="all">Todas las Categorías</option>
+                                <option value="manicura">Manicura</option>
+                                <option value="pedicura">Pedicura</option>
+                                <option value="peluqueria">Peluquería</option>
+                                <option value="tintura">Tintura y Color</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="custom-table-container">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha & Hora</th>
+                                    <th>Cliente</th>
+                                    <th>Servicio</th>
+                                    <th>Especialista</th>
+                                    <th>Precio</th>
+                                    <th>Estado</th>
+                                    <th style="text-align: right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointments-table-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. SERVICES CATALOG VIEW -->
+                <section id="view-services" class="view-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <div class="service-category-pills" id="services-category-pills">
+                            <button class="cat-pill active" data-category="all"><i class="fa-solid fa-list"></i> Todos</button>
+                            <button class="cat-pill" data-category="manicura"><i class="fa-solid fa-hand-sparkles"></i> Manicura</button>
+                            <button class="cat-pill" data-category="pedicura"><i class="fa-solid fa-shoe-prints"></i> Pedicura</button>
+                            <button class="cat-pill" data-category="peluqueria"><i class="fa-solid fa-scissors"></i> Peluquería</button>
+                            <button class="cat-pill" data-category="tintura"><i class="fa-solid fa-wand-magic-sparkles"></i> Tintura y Color</button>
+                        </div>
+
+                        <button id="btn-add-new-service" class="btn-gold" type="button">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nuevo Servicio</span>
+                        </button>
+                    </div>
+
+                    <div class="services-grid" id="services-cards-grid">
+                        <!-- Dynamic service cards -->
+                    </div>
+                </section>
+
+                <!-- 5. STAFF & SCHEDULES VIEW -->
+                <section id="view-staff" class="view-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h3 style="font-size: 1.3rem;">Equipo de Especialistas</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">Horarios de atención, turnos y especialidades asignadas</p>
+                        </div>
+                        <button id="btn-add-new-staff" class="btn-primary" type="button">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Nuevo Profesional</span>
+                        </button>
+                    </div>
+
+                    <div class="staff-grid" id="staff-cards-grid">
+                        <!-- Dynamic staff cards -->
+                    </div>
+                </section>
+
+                <!-- 6. REGISTERED CLIENTS VIEW (ADMIN ONLY) -->
+                <section id="view-clients" class="view-section">
+                    <div class="table-filter-bar">
+                        <div class="search-input-box" style="flex:1; max-width:400px;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="clients-search-input" placeholder="Buscar clienta por nombre, WhatsApp o correo...">
+                        </div>
+                        <div style="font-size:0.9rem; font-weight:700; color:var(--text-muted);" id="clients-total-counter">
+                            Total Registradas: 0
+                        </div>
+                    </div>
+
+                    <div class="custom-table-container">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Clienta</th>
+                                    <th>WhatsApp / Teléfono</th>
+                                    <th>Correo Electrónico</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Total Citas</th>
+                                    <th>Inversión Acumulada</th>
+                                    <th style="text-align: right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 7. SETTINGS & DATA MANAGEMENT VIEW -->
+                <section id="view-settings" class="view-section">
+                    <div style="max-width: 800px; display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="dash-card">
+                            <div class="dash-card-header">
+                                <h3>Información General del Spa</h3>
+                            </div>
+                            <form id="spa-settings-form">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="settings-spa-name">Nombre del Establecimiento</label>
+                                        <input type="text" id="settings-spa-name" class="form-control" value="LETY LOOK">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-spa-slogan">Slogan / Eslogan</label>
+                                        <input type="text" id="settings-spa-slogan" class="form-control" value="Belleza Integral">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-spa-phone">Teléfono / WhatsApp de Contacto</label>
+                                        <input type="text" id="settings-spa-phone" class="form-control" value="+57 3138869676">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-spa-address">Dirección del Spa</label>
+                                        <input type="text" id="settings-spa-address" class="form-control" value="Calle 100 #15-40, Chicó Norte, Bogotá D.C.">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-open-time">Hora de Apertura</label>
+                                        <input type="time" id="settings-open-time" class="form-control" value="08:00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="settings-close-time">Hora de Cierre</label>
+                                        <input type="time" id="settings-close-time" class="form-control" value="20:00">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1.5rem; text-align: right;">
+                                    <button type="submit" class="btn-primary">Guardar Configuración</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Firebase Cloud Database Setup Card -->
+                        <div class="dash-card" style="border: 2px solid var(--primary-light);">
+                            <div class="dash-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h3 style="display:flex; align-items:center; gap:0.5rem;">
+                                        <i class="fa-solid fa-cloud" style="color:var(--primary);"></i>
+                                        <span>Base de Datos en la Nube (Google Firebase)</span>
+                                    </h3>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Sincronización en tiempo real entre todos los celulares y computadores sin perder datos</p>
+                                </div>
+                                <span id="cloud-status-badge" class="status-badge status-pending" style="font-size:0.75rem;">Modo Local Activo</span>
+                            </div>
+                            
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4;">
+                                Conecta tu proyecto gratuito de <strong>Google Firebase Firestore</strong> para que todas las citas, clientes y servicios se guarden en la nube permanentemente y nunca se borren aunque se limpien las cookies del navegador.
+                            </p>
+
+                            <form id="firebase-config-form">
+                                <div class="form-group" style="margin-bottom:1rem;">
+                                    <label for="firebase-config-json" style="font-size:0.82rem; font-weight:700;">Pega aquí la Configuración de Firebase (JSON o SDK config):</label>
+                                    <textarea id="firebase-config-json" class="form-control" rows="4" style="font-family:monospace; font-size:0.8rem;" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "lety-look.firebaseapp.com",\n  "projectId": "lety-look",\n  "storageBucket": "lety-look.appspot.com",\n  "messagingSenderId": "...",\n  "appId": "..."\n}'></textarea>
+                                </div>
+                                <div style="display:flex; gap:0.75rem; justify-content:flex-end; flex-wrap:wrap;">
+                                    <button type="button" id="btn-upload-to-cloud" class="btn-secondary" style="color:var(--primary); border-color:var(--primary);">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>Subir Toda la Base de Datos a la Nube</span>
+                                    </button>
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-link"></i>
+                                        <span>Guardar y Conectar Firebase</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- APK Android Card -->
+                        <div class="dash-card">
+                            <div class="dash-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h3 style="display:flex; align-items:center; gap:0.5rem;">
+                                        <i class="fa-brands fa-android" style="color:#0d9488;"></i>
+                                        <span>Aplicación Móvil para Clientes (APK Android)</span>
+                                    </h3>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Instalador APK y PWA para compartir con tus clientas</p>
+                                </div>
+                                <a href="cliente.html" target="_blank" class="status-badge status-confirmed" style="text-decoration:none; display:flex; align-items:center; gap:0.3rem;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir App
+                                </a>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.4;">
+                                Tus clientas pueden instalar la App directamente en su celular Android con el botón <strong>"Instalar APK"</strong> al abrir el enlace, o puedes generar el archivo instalador <code>.apk</code> en 1 clic:
+                            </p>
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                <a href="https://www.pwabuilder.com/" target="_blank" class="btn-primary" style="text-decoration:none; background:#0d9488; border-color:#0d9488;">
+                                    <i class="fa-brands fa-android"></i>
+                                    <span>Generar Archivo .APK (PWABuilder)</span>
+                                </a>
+                                <a href="cliente.html" target="_blank" class="btn-secondary" style="text-decoration:none;">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                    <span>Ver App Móvil</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="dash-card">
+                            <div class="dash-card-header">
+                                <h3>Respaldo y Gestión de Datos</h3>
+                            </div>
+                            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                                Puedes exportar toda la base de datos (citas, servicios y profesionales) como archivo JSON para guardarlo o transferirlo, o restablecer los datos de demostración iniciales.
+                            </p>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button id="btn-export-json-data" class="btn-secondary" type="button">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Exportar Base de Datos (.json)</span>
+                                </button>
+                                <button id="btn-reset-demo-data" class="btn-secondary" style="color: #d97706;" type="button">
+                                    <i class="fa-solid fa-rotate"></i>
+                                    <span>Restaurar Datos Iniciales</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 1: APPOINTMENT RESERVATION (INTERACTIVE BOOKING)
+         ========================================================================== -->
+    <div id="modal-appointment" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-appointment-title">Agendar Nueva Cita</h3>
+                <button class="modal-close-btn" data-close-modal="modal-appointment"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="appointment-form">
+                <input type="hidden" id="apt-form-id">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="apt-client-name">Nombre del Cliente *</label>
+                            <input type="text" id="apt-client-name" class="form-control" placeholder="Ej. Camila Morales" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apt-client-phone">WhatsApp / Celular *</label>
+                            <input type="tel" id="apt-client-phone" class="form-control" placeholder="Ej. +57 310 123 4567" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="apt-service-select">Servicio Deseado *</label>
+                            <select id="apt-service-select" class="form-control" required>
+                                <option value="">Seleccione un servicio...</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="apt-staff-select">Especialista / Profesional *</label>
+                            <select id="apt-staff-select" class="form-control" required>
+                                <option value="">Seleccione profesional disponible...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apt-date">Fecha de la Cita *</label>
+                            <input type="date" id="apt-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apt-time">Hora de Inicio *</label>
+                            <input type="time" id="apt-time" class="form-control" step="900" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apt-status">Estado de la Cita</label>
+                            <select id="apt-status" class="form-control">
+                                <option value="confirmed">Confirmada</option>
+                                <option value="pending">Pendiente de Confirmación</option>
+                                <option value="completed">Completada</option>
+                                <option value="cancelled">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apt-price-display">Precio a Cobrar (COP)</label>
+                            <input type="text" id="apt-price-display" class="form-control" readonly style="background:#f1ece7; font-weight:700;">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="apt-notes">Notas o Preferencias Especiales</label>
+                            <textarea id="apt-notes" class="form-control" rows="2" placeholder="Ej. Sensibilidad, color de esmalte deseado, tono de cabello..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modal-appointment">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btn-save-appointment">Confirmar y Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 2: SERVICE FORM (CREATE/EDIT)
+         ========================================================================== -->
+    <div id="modal-service" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-service-title">Nuevo Servicio</h3>
+                <button class="modal-close-btn" data-close-modal="modal-service"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="service-form">
+                <input type="hidden" id="service-form-id">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="service-name">Nombre del Servicio *</label>
+                            <input type="text" id="service-name" class="form-control" placeholder="Ej. Balayage Premium con Plex" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-category">Categoría *</label>
+                            <select id="service-category" class="form-control" required>
+                                <option value="manicura">Manicura</option>
+                                <option value="pedicura">Pedicura</option>
+                                <option value="peluqueria">Peluquería</option>
+                                <option value="tintura">Tintura y Color</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-price">Precio (COP) *</label>
+                            <input type="number" id="service-price" class="form-control" placeholder="Ej. 45000" min="0" step="1000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-duration">Duración Estimada (Minutos) *</label>
+                            <input type="number" id="service-duration" class="form-control" placeholder="Ej. 60" min="15" step="15" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Fotografía del Tratamiento / Servicio *</label>
+                            <div style="display:flex; align-items:center; gap:1rem; background:var(--bg-subtle); padding:0.75rem 1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                                <img id="service-image-preview" src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&auto=format&fit=crop&q=80" alt="Preview" style="width:75px; height:56px; border-radius:var(--radius-sm); object-fit:cover; border:2px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="flex:1;">
+                                    <label for="service-image-file" style="font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:0.25rem; display:block;">Subir foto desde tu dispositivo:</label>
+                                    <input type="file" id="service-image-file" accept="image/*" class="form-control" style="padding:0.35rem 0.5rem; font-size:0.8rem;">
+                                    <input type="hidden" id="service-image">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="service-description">Descripción del Procedimiento *</label>
+                            <textarea id="service-description" class="form-control" rows="3" placeholder="Detalla qué incluye el servicio y sus beneficios..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modal-service">Cancelar</button>
+                    <button type="submit" class="btn-gold" id="btn-save-service">Guardar Servicio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 3: STAFF MEMBER FORM (CREATE/EDIT)
+         ========================================================================== -->
+    <div id="modal-staff" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-staff-title">Nuevo Especialista</h3>
+                <button class="modal-close-btn" data-close-modal="modal-staff"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="staff-form">
+                <input type="hidden" id="staff-form-id">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="staff-name">Nombre Completo *</label>
+                            <input type="text" id="staff-name" class="form-control" placeholder="Ej. Andrea Gómez" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff-title">Cargo / Título Profesional *</label>
+                            <input type="text" id="staff-title" class="form-control" placeholder="Ej. Master Colorista" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff-phone">Teléfono / WhatsApp *</label>
+                            <input type="tel" id="staff-phone" class="form-control" placeholder="+57 310 000 0000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff-email">Correo Electrónico</label>
+                            <input type="email" id="staff-email" class="form-control" placeholder="andrea@letylookspa.com">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Especialidades y Áreas de Atención *</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="staff-spec" value="manicura"> Manicura
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="staff-spec" value="pedicura"> Pedicura
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="staff-spec" value="peluqueria"> Peluquería
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="staff-spec" value="tintura"> Tintura y Color
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff-start-time">Hora Inicio Turno</label>
+                            <input type="time" id="staff-start-time" class="form-control" value="09:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff-end-time">Hora Fin Turno</label>
+                            <input type="time" id="staff-end-time" class="form-control" value="18:00" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Días Laborales de la Semana *</label>
+                            <div class="checkbox-group" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="1" checked> Lunes</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="2" checked> Martes</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="3" checked> Miércoles</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="4" checked> Jueves</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="5" checked> Viernes</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="6" checked> Sábado</label>
+                                <label class="checkbox-label"><input type="checkbox" name="staff-workday" value="0"> Domingo</label>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Fotografía del Especialista *</label>
+                            <div style="display:flex; align-items:center; gap:1rem; background:var(--bg-subtle); padding:0.75rem 1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                                <img id="staff-avatar-preview" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=60" alt="Preview" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="flex:1;">
+                                    <label for="staff-avatar-file" style="font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:0.25rem; display:block;">Subir archivo de imagen (desde tu equipo):</label>
+                                    <input type="file" id="staff-avatar-file" accept="image/*" class="form-control" style="padding:0.35rem 0.5rem; font-size:0.8rem;">
+                                    <input type="hidden" id="staff-avatar">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="staff-bio">Breve Biografía o Experiencia</label>
+                            <textarea id="staff-bio" class="form-control" rows="2" placeholder="Experta en técnicas avanzadas con más de 5 años de trayectoria..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modal-staff">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btn-save-staff">Guardar Especialista</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 4: APPOINTMENT DETAIL & WHATSAPP VOUCHER
+         ========================================================================== -->
+    <div id="modal-apt-detail" class="modal-overlay">
+        <div class="modal-container" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>Detalle del Turno / Cita</h3>
+                <button class="modal-close-btn" data-close-modal="modal-apt-detail"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="apt-detail-content">
+                <!-- Dynamic voucher content -->
+            </div>
+            <div class="modal-footer" id="apt-detail-footer">
+                <!-- Actions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 5: CLIENT APPOINTMENTS HISTORY (ADMIN)
+         ========================================================================== -->
+    <div id="modal-client-history" class="modal-overlay">
+        <div class="modal-container" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 id="modal-client-history-title">Historial de Citas</h3>
+                <button class="modal-close-btn" data-close-modal="modal-client-history"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="modal-client-history-content">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-close-modal="modal-client-history">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/data.js?v=7.0"></script>
+    <script src="js/app.js?v=7.0"></script>
+</body>
+</html>

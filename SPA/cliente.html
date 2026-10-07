@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LETY LOOK | Reserva tu Cita Online</title>
+    <meta name="description" content="Agenda tu cita en LETY LOOK Spa. Especialistas en manicura rusa, pedicura spa, cortes, peinados, balayage y tinturas.">
+    <meta name="theme-color" content="#d45979">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LETY LOOK">
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK (Cloud Database) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js?v=4.0"></script>
+    <!-- Client App Stylesheet -->
+    <link rel="stylesheet" href="css/client-app.css?v=7.1">
+</head>
+<body>
+    <div class="mobile-app-container">
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <div class="header-brand">
+                <img src="img/logo.png" alt="LETY LOOK Logo" style="height: 44px; width: auto; object-fit: contain; border-radius: var(--radius-sm);">
+                <div class="brand-text">
+                    <h1 style="font-size: 1.15rem;">LETY LOOK</h1>
+                    <span>Belleza Integral</span>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <button id="btn-theme-switcher-client" class="header-action-btn" title="Cambiar Tema de Color" type="button">
+                    <i class="fa-solid fa-palette"></i>
+                </button>
+                <button id="btn-force-refresh-client-app" class="header-action-btn" title="Actualizar App" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <div id="header-auth-badge">
+                    <!-- Populated dynamically: User Avatar or Login Button -->
+                </div>
+            </div>
+        </header>
+
+        <!-- ======================================================================
+             TAB 1: EXPLORE & SERVICES CATALOG
+             ====================================================================== -->
+        <section id="tab-explore" class="tab-content active">
+            <!-- Native Android Install App Prompt Banner (Always Visible) -->
+            <div id="android-install-banner" style="display:flex; margin:0.85rem 1.25rem 0.25rem; background:linear-gradient(135deg, #0d9488, #059669); color:white; border-radius:var(--radius-md); padding:0.9rem 1.15rem; align-items:center; justify-content:space-between; box-shadow:0 6px 16px rgba(13, 148, 136, 0.3); border:1px solid #34d399;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-brands fa-android" style="font-size:1.4rem; color:#fff;"></i>
+                    </div>
+                    <div style="font-size:0.82rem; line-height:1.25;">
+                        <strong style="font-size:0.88rem;">Descargar App para Android</strong>
+                        <div style="font-size:0.72rem; opacity:0.95;">Instala LETY LOOK en tu celular</div>
+                    </div>
+                </div>
+                <button id="btn-trigger-android-install" type="button" style="background:#fff; color:#065f46; border:none; padding:0.55rem 1rem; border-radius:var(--radius-full); font-size:0.78rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15); display:flex; align-items:center; gap:0.35rem;">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Instalar APK</span>
+                </button>
+            </div>
+
+            <!-- Hero Welcome Card -->
+            <div class="client-hero-banner">
+                <span class="hero-tag">✨ Experiencia Exclusiva</span>
+                <h2 id="hero-greeting-title">Resalta tu Belleza con los Mejores Expertos</h2>
+                <p>Manicura, pedicura, diseño capilar y colorimetría de primer nivel.</p>
+                <button id="btn-hero-start-booking" class="btn-hero-book" type="button">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Agendar Cita Ahora</span>
+                </button>
+            </div>
+
+            <!-- Categories Horizontal Selector -->
+            <div class="section-title-wrap">
+                <h3>Servicios de Belleza</h3>
+            </div>
+            <div class="category-horizontal-list" id="client-category-slider">
+                <button class="cat-btn-pill active" data-cat="all"><i class="fa-solid fa-sparkles"></i> Todos</button>
+                <button class="cat-btn-pill" data-cat="manicura"><i class="fa-solid fa-hand-sparkles"></i> Manicura</button>
+                <button class="cat-btn-pill" data-cat="pedicura"><i class="fa-solid fa-shoe-prints"></i> Pedicura</button>
+                <button class="cat-btn-pill" data-cat="peluqueria"><i class="fa-solid fa-scissors"></i> Peluquería</button>
+                <button class="cat-btn-pill" data-cat="tintura"><i class="fa-solid fa-wand-magic-sparkles"></i> Tintura y Color</button>
+            </div>
+
+            <!-- Services Dynamic List -->
+            <div class="services-client-list" id="client-services-list">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ======================================================================
+             TAB 2: STEP-BY-STEP BOOKING WIZARD
+             ====================================================================== -->
+        <section id="tab-book" class="tab-content" style="display: none;">
+            <div class="booking-wizard-container">
+                <!-- Stepper Progress Header -->
+                <div class="stepper-progress-bar">
+                    <div class="step-circle active" id="circle-step-1">1</div>
+                    <div class="step-circle" id="circle-step-2">2</div>
+                    <div class="step-circle" id="circle-step-3">3</div>
+                    <div class="step-circle" id="circle-step-4">4</div>
+                </div>
+
+                <!-- Step 1: Service Selection -->
+                <div class="step-card active" id="wizard-step-1">
+                    <h3 class="step-title">1. Elige tu Servicio</h3>
+                    <p class="step-subtitle">Selecciona el tratamiento que deseas agendar hoy</p>
+                    <div class="staff-selectable-list" id="wizard-services-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Step 2: Specialist Selection -->
+                <div class="step-card" id="wizard-step-2">
+                    <h3 class="step-title">2. Selecciona tu Especialista</h3>
+                    <p class="step-subtitle">Profesionales disponibles para tu tratamiento</p>
+                    <div class="staff-selectable-list" id="wizard-staff-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+                        <button class="btn-book-service btn-wizard-back" data-prev="1" style="flex:1; justify-content:center;">
+                            <i class="fa-solid fa-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Date & Time Selection -->
+                <div class="step-card" id="wizard-step-3">
+                    <h3 class="step-title">3. Fecha y Horario</h3>
+                    <p class="step-subtitle">Elige el día y la hora que mejor se acomoden a ti</p>
+                    <div class="date-slot-picker">
+                        <div class="client-form-group">
+                            <label for="wizard-date-input">Selecciona la Fecha:</label>
+                            <input type="date" id="wizard-date-input" class="client-form-input">
+                        </div>
+
+                        <div>
+                            <label style="font-size:0.82rem; font-weight:700; margin-bottom:0.5rem; display:block;">Horarios Disponibles:</label>
+                            <div class="time-slots-grid" id="wizard-slots-grid">
+                                <!-- Dynamic time slots -->
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+                        <button class="btn-book-service btn-wizard-back" data-prev="2" style="flex:1; justify-content:center;">
+                            <i class="fa-solid fa-arrow-left"></i> Volver
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Client Details & Finalize -->
+                <div class="step-card" id="wizard-step-4">
+                    <h3 class="step-title">4. Tus Datos de Contacto</h3>
+                    <p class="step-subtitle">Para confirmar y recordarte tu turno</p>
+                    <form id="wizard-confirm-form">
+                        <div class="client-form-group">
+                            <label for="wizard-client-name">Tu Nombre Completo *</label>
+                            <input type="text" id="wizard-client-name" class="client-form-input" placeholder="Ej. Camila Morales" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="wizard-client-phone">Tu WhatsApp / Celular *</label>
+                            <input type="tel" id="wizard-client-phone" class="client-form-input" placeholder="Ej. 310 123 4567" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="wizard-client-email">Correo Electrónico (Opcional)</label>
+                            <input type="email" id="wizard-client-email" class="client-form-input" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="client-form-group">
+                            <label for="wizard-client-notes">Notas / Preferencias (Opcional)</label>
+                            <input type="text" id="wizard-client-notes" class="client-form-input" placeholder="Ej. Color favorito, alergias...">
+                        </div>
+
+                        <!-- Summary preview -->
+                        <div style="background:var(--bg-subtle); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem; font-size:0.85rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                                <span style="color:var(--text-secondary);">Servicio:</span>
+                                <strong id="summary-service-name">--</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                                <span style="color:var(--text-secondary);">Especialista:</span>
+                                <strong id="summary-staff-name">--</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                                <span style="color:var(--text-secondary);">Cita:</span>
+                                <strong id="summary-datetime">--</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border-color); padding-top:0.4rem; margin-top:0.4rem;">
+                                <span style="color:var(--text-secondary);">Total a Pagar:</span>
+                                <strong id="summary-price" style="color:var(--primary); font-size:1rem;">--</strong>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:0.5rem;">
+                            <button type="button" class="btn-book-service btn-wizard-back" data-prev="3" style="flex:1; justify-content:center;">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button type="submit" class="btn-hero-book" style="flex:3; justify-content:center;">
+                                <span>Confirmar Reserva</span>
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 5: Success & Digital Voucher -->
+                <div class="step-card" id="wizard-step-success" style="padding:0;">
+                    <div class="digital-ticket">
+                        <div class="ticket-top">
+                            <i class="fa-solid fa-circle-check" style="font-size:2.2rem; margin-bottom:0.4rem;"></i>
+                            <h3>¡Cita Confirmada!</h3>
+                            <p>Spa LETY LOOK te espera</p>
+                        </div>
+                        <div class="ticket-body" id="success-ticket-details">
+                            <!-- Ticket details -->
+                        </div>
+                        <div class="ticket-actions">
+                            <button id="btn-send-whatsapp-booking" class="btn-client-wa" type="button">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <span>Notificar al Spa (+57 3138869676)</span>
+                            </button>
+                            <button id="btn-send-whatsapp-staff" class="btn-client-wa" style="background:#0d9488;" type="button">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <span id="label-notify-staff-btn">Notificar a la Especialista</span>
+                            </button>
+                            <button id="btn-view-my-appointments-after-booking" class="btn-book-service" style="justify-content:center;" type="button">
+                                <i class="fa-solid fa-receipt"></i> Ver en Mis Citas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ======================================================================
+             TAB 3: SPECIALISTS DIRECTORY
+             ====================================================================== -->
+        <section id="tab-staff" class="tab-content" style="display: none; padding: 1.25rem;">
+            <div class="section-title-wrap" style="padding:0; margin-bottom:1rem;">
+                <h3>Nuestras Especialistas</h3>
+            </div>
+            <div class="staff-selectable-list" id="client-staff-directory">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ======================================================================
+             TAB 4: CLIENT'S BOOKED APPOINTMENTS ("MIS CITAS")
+             ====================================================================== -->
+        <section id="tab-my-appointments" class="tab-content" style="display: none; padding: 1.25rem;">
+            <div class="section-title-wrap" style="padding:0; margin-bottom:1rem;">
+                <h3>Mis Reservas Privadas</h3>
+            </div>
+            <div class="client-history-list" id="client-my-appointments-list">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ======================================================================
+             TAB 5: AUTHENTICATION & CLIENT ACCOUNT ("MI CUENTA")
+             ====================================================================== -->
+        <section id="tab-account" class="tab-content" style="display: none; padding: 1.25rem;">
+            <!-- Not logged in: Login & Register Forms -->
+            <div id="auth-unauthenticated-view">
+                <div class="auth-segmented-control">
+                    <button id="btn-tab-login" class="auth-tab-btn active" type="button">Iniciar Sesión</button>
+                    <button id="btn-tab-register" class="auth-tab-btn" type="button">Crear Cuenta</button>
+                </div>
+
+                <div id="auth-error-box" class="auth-alert-error"></div>
+
+                <!-- Login Form -->
+                <div id="form-login-container" class="auth-card">
+                    <h3 style="font-family:'Playfair Display', serif; font-size:1.3rem; margin-bottom:0.3rem;">Bienvenida de nuevo</h3>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">Accede a tu cuenta para ver tus citas y agendar al instante.</p>
+                    
+                    <form id="client-login-form">
+                        <div class="client-form-group">
+                            <label for="login-identifier">Correo o Celular</label>
+                            <input type="text" id="login-identifier" class="client-form-input" placeholder="ejemplo@gmail.com o 3001234567" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="login-password">Contraseña</label>
+                            <input type="password" id="login-password" class="client-form-input" placeholder="Tu contraseña" required>
+                        </div>
+                        <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.5rem; padding:0.8rem;">
+                            <span>Ingresar</span>
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div id="form-register-container" class="auth-card" style="display: none;">
+                    <h3 style="font-family:'Playfair Display', serif; font-size:1.3rem; margin-bottom:0.3rem;">Crear mi Cuenta</h3>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">Disfruta de atención personalizada y reserva en segundos.</p>
+                    
+                    <form id="client-register-form">
+                        <div class="client-form-group">
+                            <label for="reg-name">Nombre Completo *</label>
+                            <input type="text" id="reg-name" class="client-form-input" placeholder="Ej. Camila Morales" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="reg-phone">WhatsApp / Celular *</label>
+                            <input type="tel" id="reg-phone" class="client-form-input" placeholder="Ej. 310 123 4567" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="reg-email">Correo Electrónico *</label>
+                            <input type="email" id="reg-email" class="client-form-input" placeholder="ejemplo@gmail.com" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="reg-password">Contraseña *</label>
+                            <input type="password" id="reg-password" class="client-form-input" placeholder="Mínimo 4 caracteres" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="reg-avatar-file">Foto de Perfil (Opcional)</label>
+                            <div style="display:flex; align-items:center; gap:0.75rem;">
+                                <img id="reg-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=d45979&color=fff" alt="Preview" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid var(--primary-light);">
+                                <input type="file" id="reg-avatar-file" class="client-form-input" accept="image/*" style="padding:0.4rem; font-size:0.75rem;">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.5rem; padding:0.8rem;">
+                            <span>Registrarme y Acceder</span>
+                            <i class="fa-solid fa-user-check"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Logged in: Profile Card & Logout -->
+            <div id="auth-authenticated-view" style="display: none;">
+                <div class="profile-card">
+                    <div class="avatar-upload-wrapper">
+                        <img id="profile-avatar-display" src="" alt="Avatar" class="profile-avatar-large">
+                        <label for="client-avatar-file-input" class="avatar-upload-btn" title="Cambiar Foto de Perfil">
+                            <i class="fa-solid fa-camera"></i>
+                        </label>
+                        <input type="file" id="client-avatar-file-input" accept="image/*" style="display:none;">
+                    </div>
+                    <h3 id="profile-name-display" class="profile-name">Cliente</h3>
+                    <span class="profile-badge">Cliente VIP Lety Look</span>
+
+                    <div class="profile-info-list">
+                        <div class="profile-info-row">
+                            <span style="color:var(--text-secondary);"><i class="fa-regular fa-envelope"></i> Correo:</span>
+                            <strong id="profile-email-display">--</strong>
+                        </div>
+                        <div class="profile-info-row">
+                            <span style="color:var(--text-secondary);"><i class="fa-brands fa-whatsapp"></i> Celular:</span>
+                            <strong id="profile-phone-display">--</strong>
+                        </div>
+                        <div class="profile-info-row">
+                            <span style="color:var(--text-secondary);"><i class="fa-solid fa-calendar-check"></i> Total Citas:</span>
+                            <strong id="profile-total-appointments">0</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <button id="btn-profile-install-apk" class="btn-book-service" style="justify-content:center; padding:0.75rem; background:#0d9488; color:#fff; border-color:#0d9488;">
+                        <i class="fa-brands fa-android"></i> <span>Descargar App Android (APK)</span>
+                    </button>
+                    <button id="btn-profile-go-to-appointments" class="btn-book-service" style="justify-content:center; padding:0.75rem;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Ver Mis Citas Reservadas
+                    </button>
+                    <button id="btn-client-logout" class="btn-book-service" style="justify-content:center; padding:0.75rem; background:#fee2e2; border-color:#fca5a5; color:#991b1b;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Android APK Install Guide Modal -->
+        <div id="modal-apk-instructions" class="client-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:1.25rem;">
+            <div style="background:#fff; border-radius:var(--radius-lg); padding:1.5rem; max-width:380px; width:100%; box-shadow:0 10px 30px rgba(0,0,0,0.3); text-align:center;">
+                <div style="width:54px; height:54px; border-radius:50%; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1rem;">
+                    <i class="fa-brands fa-android"></i>
+                </div>
+                <h3 style="font-size:1.2rem; margin-bottom:0.5rem; color:var(--text-main);">Instalar App en Android</h3>
+                <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4; margin-bottom:1.25rem;">
+                    Para instalar la app de <strong>LETY LOOK</strong> directamente en tu celular como APK:
+                </p>
+                <div style="text-align:left; background:var(--bg-subtle); padding:0.85rem 1rem; border-radius:var(--radius-md); font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <div><strong>1.</strong> Toca los <strong>3 puntos (⋮)</strong> en la esquina superior derecha de tu navegador Chrome.</div>
+                    <div><strong>2.</strong> Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Agregar a pantalla principal"</strong>.</div>
+                    <div><strong>3.</strong> ¡Listo! Se abrirá como App nativa en tu teléfono.</div>
+                </div>
+                <button id="btn-close-apk-modal" type="button" class="btn-hero-book" style="width:100%; justify-content:center; padding:0.75rem;">
+                    Entendido
+                </button>
+            </div>
+        </div>
+
+        <!-- ======================================================================
+             BOTTOM APP NAVIGATION BAR
+             ====================================================================== -->
+        <nav class="app-bottom-nav">
+            <button class="nav-tab-btn active" data-target="tab-explore">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Explorar</span>
+            </button>
+            <button class="nav-tab-btn" data-target="tab-book">
+                <i class="fa-solid fa-calendar-plus"></i>
+                <span>Reservar</span>
+            </button>
+            <button class="nav-tab-btn" data-target="tab-staff">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Equipo</span>
+            </button>
+            <button class="nav-tab-btn" data-target="tab-my-appointments">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Mis Citas</span>
+            </button>
+            <button class="nav-tab-btn" data-target="tab-account">
+                <i class="fa-solid fa-user"></i>
+                <span id="nav-account-label">Cuenta</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js?v=7.0"></script>
+    <script src="js/client-app.js?v=7.0"></script>
+</body>
+</html>
