@@ -974,37 +974,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Theme Switcher for Client App
-    const themes = ['default', 'turquoise', 'emerald', 'royal', 'midnight', 'sunset', 'halloween'];
-    const themeNames = {
-        default: 'Rose Gold',
-        turquoise: 'Turquesa LT',
-        emerald: 'Emerald Luxury',
-        royal: 'Royal Violet',
-        midnight: 'Midnight Noir',
-        sunset: 'Sunset Amber',
-        halloween: '🎃 Halloween Spooky'
-    };
-
+    // Theme controlled exclusively by Admin Panel Settings
     const savedTheme = localStorage.getItem('lety_look_theme') || 'default';
     applyClientTheme(savedTheme);
 
     function applyClientTheme(themeName) {
-        if (themeName === 'default') {
+        if (!themeName || themeName === 'default') {
             document.documentElement.removeAttribute('data-theme');
         } else {
             document.documentElement.setAttribute('data-theme', themeName);
         }
-        localStorage.setItem('lety_look_theme', themeName);
     }
 
-    document.getElementById('btn-theme-switcher-client')?.addEventListener('click', () => {
-        const current = localStorage.getItem('lety_look_theme') || 'default';
-        const currentIndex = themes.indexOf(current);
-        const nextTheme = themes[(currentIndex + 1) % themes.length];
-        applyClientTheme(nextTheme);
-        alert(`Tema cambiado a: ${themeNames[nextTheme]}`);
-    });
+    // Live sync theme if admin changes it in real time via Cloud Firestore
+    if (window.cloudService) {
+        window.cloudService.onSync((collectionName) => {
+            if (collectionName === 'settings') {
+                try {
+                    const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
+                    if (settings.activeTheme) {
+                        applyClientTheme(settings.activeTheme);
+                        localStorage.setItem('lety_look_theme', settings.activeTheme);
+                    }
+                } catch (e) {
+                    console.log('Error updating live theme:', e);
+                }
+            }
+        });
+    }
 
     // Initial load: Clean guest state unless client specifically logs in
     updateAuthUI();

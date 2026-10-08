@@ -1638,6 +1638,18 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.setAttribute('data-theme', themeName);
         }
         localStorage.setItem('lety_look_theme', themeName);
+
+        // Synchronize with Client App via settings & Cloud Firestore
+        try {
+            const currentSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
+            currentSettings.activeTheme = themeName;
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(currentSettings));
+            if (window.cloudService && window.cloudService.isInitialized) {
+                window.cloudService.saveCloudDocument('lety_look', 'settings', currentSettings);
+            }
+        } catch (e) {
+            console.log('Error saving theme to settings:', e);
+        }
     }
 
     const themeSwitcherBtn = document.getElementById('btn-theme-switcher');
