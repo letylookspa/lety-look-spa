@@ -1676,6 +1676,111 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // =========================================================================
+    // 10. ADMINISTRATOR SECURITY & ACCESS GATE (PIN PROTECTION)
+    // =========================================================================
+    const DEFAULT_ADMIN_PIN = 'lety2026';
+    const securityGate = document.getElementById('admin-security-gate');
+    const adminLayout = document.getElementById('admin-app-layout');
+    const pinInput = document.getElementById('admin-pin-input');
+    const authError = document.getElementById('admin-auth-error');
+
+    function checkAdminAuth() {
+        const isAuth = sessionStorage.getItem('lety_admin_authenticated') === 'true';
+        if (isAuth) {
+            if (securityGate) securityGate.style.display = 'none';
+            if (adminLayout) adminLayout.style.display = 'flex';
+        } else {
+            if (securityGate) securityGate.style.display = 'flex';
+            if (adminLayout) adminLayout.style.display = 'none';
+            if (pinInput) {
+                pinInput.value = '';
+                setTimeout(() => pinInput.focus(), 300);
+            }
+        }
+    }
+
+    checkAdminAuth();
+
+    // Toggle PIN visibility
+    document.getElementById('btn-toggle-pin-visibility')?.addEventListener('click', () => {
+        if (!pinInput) return;
+        const isPassword = pinInput.type === 'password';
+        pinInput.type = isPassword ? 'text' : 'password';
+        const icon = document.querySelector('#btn-toggle-pin-visibility i');
+        if (icon) {
+            icon.className = isPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        }
+    });
+
+    // Handle Admin Login Submit
+    document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const currentSavedPin = localStorage.getItem('lety_admin_pin') || DEFAULT_ADMIN_PIN;
+        const enteredPin = pinInput ? pinInput.value.trim() : '';
+
+        if (enteredPin === currentSavedPin) {
+            if (authError) authError.style.display = 'none';
+            sessionStorage.setItem('lety_admin_authenticated', 'true');
+            if (securityGate) securityGate.style.display = 'none';
+            if (adminLayout) adminLayout.style.display = 'flex';
+            showToast('¡Bienvenida Administradora! Panel desbloqueado');
+        } else {
+            if (authError) authError.style.display = 'block';
+            if (pinInput) {
+                pinInput.value = '';
+                pinInput.focus();
+            }
+        }
+    });
+
+    // Lock Panel (Logout)
+    function lockAdminPanel() {
+        sessionStorage.removeItem('lety_admin_authenticated');
+        checkAdminAuth();
+        showToast('Panel de administración bloqueado con éxito', 'info');
+    }
+
+    document.getElementById('sidebar-lock-btn')?.addEventListener('click', lockAdminPanel);
+    document.getElementById('topbar-lock-btn')?.addEventListener('click', lockAdminPanel);
+
+    // Change Admin PIN in Settings
+    document.getElementById('change-admin-pin-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const currentPinInput = document.getElementById('current-admin-pin');
+        const newPinInput = document.getElementById('new-admin-pin');
+        const savedPin = localStorage.getItem('lety_admin_pin') || DEFAULT_ADMIN_PIN;
+
+        if (currentPinInput.value.trim() !== savedPin) {
+            showToast('La clave actual es incorrecta', 'error');
+            return;
+        }
+
+        const newPin = newPinInput.value.trim();
+        if (newPin.length < 4) {
+            showToast('La nueva clave debe tener al menos 4 caracteres', 'error');
+            return;
+        }
+
+        localStorage.setItem('lety_admin_pin', newPin);
+        currentPinInput.value = '';
+        newPinInput.value = '';
+
+        // Sync with Cloud Firestore Settings if connected
+        try {
+            const currentSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
+            currentSettings.adminPin = newPin;
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(currentSettings));
+            if (window.cloudService && window.cloudService.isInitialized) {
+                window.cloudService.saveCloudDocument('lety_look', 'settings', currentSettings);
+            }
+        } catch (err) {
+            console.log('Error syncing PIN to cloud:', err);
+        }
+
+        showToast('¡Clave de administración actualizada con éxito!');
+    });
+
     // Initial load
     switchView('dashboard');
 });

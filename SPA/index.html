@@ -20,7 +20,45 @@
     <script src="js/firebase-config.js?v=5.0"></script>
 </head>
 <body>
-    <div class="app-layout">
+    <!-- Admin Security Gate / Lock Screen -->
+    <div id="admin-security-gate" style="display:flex; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(13,9,20,0.96); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); z-index:999999; align-items:center; justify-content:center; padding:1.5rem;">
+        <div style="width:100%; max-width:420px; background:var(--bg-surface, #ffffff); border-radius:var(--radius-lg, 18px); padding:2.5rem 2rem; box-shadow:0 25px 60px rgba(0,0,0,0.5); border:1px solid var(--border-color, #e2e8f0); text-align:center;">
+            <div style="width:68px; height:68px; border-radius:50%; background:linear-gradient(135deg, var(--primary, #d45979), #e06d85); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1.25rem; box-shadow:0 8px 25px rgba(212,89,121,0.35);">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 style="font-family:'Playfair Display', serif; font-size:1.6rem; margin-bottom:0.4rem; color:var(--text-main, #1e1b18);">Panel de Administración</h2>
+            <p style="font-size:0.85rem; color:var(--text-muted, #6b635b); margin-bottom:1.5rem; line-height:1.4;">Acceso confidencial restringido exclusivamente para el personal de <strong>LETY LOOK SPA</strong>.</p>
+            
+            <form id="admin-login-form" style="text-align:left;">
+                <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label for="admin-pin-input" style="font-size:0.85rem; font-weight:700; color:var(--text-main, #1e1b18); margin-bottom:0.4rem; display:block;">PIN o Clave de Administrador:</label>
+                    <div style="position:relative;">
+                        <input type="password" id="admin-pin-input" class="form-control" placeholder="Ingresa tu clave" required autofocus style="padding-right:2.8rem; font-size:1.05rem; letter-spacing:2px;">
+                        <button type="button" id="btn-toggle-pin-visibility" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted, #888); cursor:pointer; font-size:1rem; padding:0.25rem;">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                    <span id="admin-auth-error" style="display:none; color:#ef4444; font-size:0.8rem; margin-top:0.4rem; font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Clave incorrecta. Intenta nuevamente.</span>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:0.85rem; font-size:0.95rem; margin-bottom:1rem;">
+                    <i class="fa-solid fa-key"></i>
+                    <span>Desbloquear Panel</span>
+                </button>
+            </form>
+
+            <!-- Friendly Redirection for Regular Clients -->
+            <div style="border-top:1px solid var(--border-color, #e2e8f0); padding-top:1.25rem; margin-top:0.5rem;">
+                <p style="font-size:0.82rem; color:var(--text-muted, #6b635b); margin-bottom:0.75rem;">¿Eres cliente y deseas agendar tu cita?</p>
+                <a href="cliente.html" class="btn-secondary" style="width:100%; justify-content:center; padding:0.7rem; font-size:0.88rem; text-decoration:none; color:var(--primary, #d45979); border-color:var(--primary-light, #fbecee); background:var(--primary-light, #fbecee); font-weight:700;">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Ir a la App de Clientes</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-layout" id="admin-app-layout" style="display:none;">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="brand">
@@ -84,6 +122,10 @@
                 <button id="sidebar-quick-booking-btn" class="quick-book-btn" type="button">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Agendar Cita Rápida</span>
+                </button>
+                <button id="sidebar-lock-btn" type="button" style="width:100%; background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:0.65rem; border-radius:var(--radius-md); font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem; transition:var(--transition);" title="Cerrar sesión de administración">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Bloquear Panel</span>
                 </button>
             </div>
         </aside>
@@ -152,6 +194,10 @@
                     <button id="topbar-new-appointment-btn" class="btn-primary" type="button">
                         <i class="fa-solid fa-calendar-plus"></i>
                         <span>Nueva Cita</span>
+                    </button>
+
+                    <button id="topbar-lock-btn" class="btn-icon" title="Bloquear / Cerrar Sesión del Panel" type="button" style="background:#fff; color:#ef4444; border-color:#fecaca;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
             </header>
@@ -404,7 +450,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="settings-spa-address">Dirección del Spa</label>
-                                        <input type="text" id="settings-spa-address" class="form-control" value="Calle 100 #15-40, Chicó Norte, Bogotá D.C.">
+                                        <input type="text" id="settings-spa-address" class="form-control" value="Calle 139 Sur #49-42, Caldas, Antioquia">
                                     </div>
                                     <div class="form-group">
                                         <label for="settings-open-time">Hora de Apertura</label>
@@ -417,6 +463,39 @@
                                 </div>
                                 <div style="margin-top: 1.5rem; text-align: right;">
                                     <button type="submit" class="btn-primary">Guardar Configuración</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Admin Security & PIN Management Card -->
+                        <div class="dash-card">
+                            <div class="dash-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <h3 style="display:flex; align-items:center; gap:0.5rem;">
+                                        <i class="fa-solid fa-shield-halved" style="color:var(--primary);"></i>
+                                        <span>Seguridad y Clave de Acceso del Administrador</span>
+                                    </h3>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Protege este panel para que los clientes no puedan ver tu contabilidad ni datos de citas</p>
+                                </div>
+                                <span class="status-badge status-confirmed" style="font-size:0.75rem;">Protegido con Clave</span>
+                            </div>
+
+                            <form id="change-admin-pin-form">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="current-admin-pin" style="font-size:0.85rem; font-weight:700;">Clave Actual:</label>
+                                        <input type="password" id="current-admin-pin" class="form-control" placeholder="Clave actual (por defecto: lety2026)" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-admin-pin" style="font-size:0.85rem; font-weight:700;">Nueva Clave / PIN:</label>
+                                        <input type="password" id="new-admin-pin" class="form-control" placeholder="Escribe tu nueva clave" required>
+                                    </div>
+                                </div>
+                                <div style="margin-top:1.25rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-key"></i>
+                                        <span>Actualizar Clave del Administrador</span>
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -769,6 +848,6 @@
 
     <!-- Scripts -->
     <script src="js/data.js?v=7.0"></script>
-    <script src="js/app.js?v=7.0"></script>
+    <script src="js/app.js?v=8.0"></script>
 </body>
 </html>

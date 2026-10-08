@@ -558,28 +558,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const detailsEl = document.getElementById('success-ticket-details');
         detailsEl.innerHTML = `
             <div class="ticket-row">
-                <span class="ticket-label">Cliente:</span>
-                <span class="ticket-val">${apt.clientName}</span>
+                <span class="ticket-label" style="color:#475569; font-weight:700;">Cliente:</span>
+                <span class="ticket-val" style="color:#0f172a; font-weight:800;">${apt.clientName}</span>
             </div>
             <div class="ticket-row">
-                <span class="ticket-label">Servicio:</span>
-                <span class="ticket-val" style="color:var(--primary);">${apt.serviceName}</span>
+                <span class="ticket-label" style="color:#475569; font-weight:700;">Servicio:</span>
+                <span class="ticket-val" style="color:var(--primary); font-weight:800;">${apt.serviceName}</span>
             </div>
             <div class="ticket-row">
-                <span class="ticket-label">Especialista:</span>
-                <span class="ticket-val" style="color:var(--gold);">${apt.staffName}</span>
+                <span class="ticket-label" style="color:#475569; font-weight:700;">Especialista:</span>
+                <span class="ticket-val" style="color:#b45309; font-weight:800;">${apt.staffName}</span>
             </div>
             <div class="ticket-row">
-                <span class="ticket-label">Fecha y Hora:</span>
-                <span class="ticket-val">${formatDateDisplay(apt.date)} &bull; ${formatTime12h(apt.time)}</span>
+                <span class="ticket-label" style="color:#475569; font-weight:700;">Fecha y Hora:</span>
+                <span class="ticket-val" style="color:#0f172a; font-weight:800;">${formatDateDisplay(apt.date)} &bull; ${formatTime12h(apt.time)}</span>
             </div>
             <div class="ticket-row">
-                <span class="ticket-label">Duración:</span>
-                <span class="ticket-val">${apt.duration} minutos</span>
+                <span class="ticket-label" style="color:#475569; font-weight:700;">Duración:</span>
+                <span class="ticket-val" style="color:#0f172a; font-weight:800;">${apt.duration} minutos</span>
             </div>
-            <div class="ticket-row" style="border-bottom:none;">
-                <span class="ticket-label">Total a Pagar:</span>
-                <span class="ticket-val" style="font-size:1.15rem; color:var(--text-primary); font-weight:800;">${formatCurrency(apt.price)}</span>
+            <div class="ticket-row" style="border-bottom:none; padding-top:0.35rem;">
+                <span class="ticket-label" style="color:#0f172a; font-weight:800; font-size:0.95rem;">Total a Pagar:</span>
+                <span class="ticket-val" style="font-size:1.3rem; color:#0f172a; font-weight:900;">${formatCurrency(apt.price)}</span>
             </div>
         `;
 
