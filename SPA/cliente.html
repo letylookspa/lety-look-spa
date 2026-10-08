@@ -24,7 +24,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js?v=4.0"></script>
     <!-- Client App Stylesheet -->
-    <link rel="stylesheet" href="css/client-app.css?v=7.1">
+    <link rel="stylesheet" href="css/client-app.css?v=7.3">
 </head>
 <body>
     <div class="mobile-app-container">
@@ -95,6 +95,60 @@
             <!-- Services Dynamic List -->
             <div class="services-client-list" id="client-services-list">
                 <!-- Dynamically populated -->
+            </div>
+
+            <!-- Spa Location Card (Maps & Navigation - Exclusive to Client App) -->
+            <div class="spa-location-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:1.25rem; margin:1.5rem 1.25rem 0.75rem; box-shadow:0 4px 18px rgba(0,0,0,0.06);">
+                <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.75rem;">
+                    <div style="width:36px; height:36px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-family:'Playfair Display', serif; font-size:1.15rem; font-weight:700; margin:0; color:var(--text-main);">Visítanos en Nuestro Spa</h4>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Atención exclusiva con cita previa</span>
+                    </div>
+                </div>
+
+                <!-- Address banner with copy action -->
+                <div style="background:var(--bg-subtle); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.85rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+                    <div style="display:flex; align-items:flex-start; gap:0.6rem;">
+                        <i class="fa-solid fa-store" style="color:var(--primary); margin-top:0.25rem; font-size:0.95rem;"></i>
+                        <div>
+                            <div style="font-size:0.88rem; font-weight:700; color:var(--text-main); line-height:1.2;">Calle 139 Sur #49-42</div>
+                            <div style="font-size:0.78rem; color:var(--text-muted);">Caldas, Antioquia</div>
+                        </div>
+                    </div>
+                    <button id="btn-copy-address" type="button" title="Copiar dirección" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-main); padding:0.45rem 0.75rem; border-radius:var(--radius-sm); font-size:0.75rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:0.35rem; flex-shrink:0; transition:var(--transition);">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+
+                <!-- Interactive Google Maps Frame -->
+                <div style="position:relative; width:100%; height:210px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); margin-bottom:1rem; background:var(--bg-subtle);">
+                    <iframe 
+                        title="Ubicación LETY LOOK SPA"
+                        src="https://maps.google.com/maps?q=Calle+139+Sur+%2349-42,+Caldas,+Antioquia&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                        width="100%" 
+                        height="100%" 
+                        style="border:0;" 
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+
+                <!-- Quick Navigation Action Buttons -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+                    <a href="https://www.google.com/maps/search/?api=1&query=Calle+139+Sur+%2349-42,+Caldas,+Antioquia" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.7rem 0.8rem; background:linear-gradient(135deg, var(--primary), #e57390); color:#fff; border-radius:var(--radius-md); font-size:0.8rem; font-weight:700; text-decoration:none; box-shadow:0 3px 10px rgba(212,89,121,0.25); text-align:center;">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>Google Maps</span>
+                    </a>
+                    <a href="https://waze.com/ul?q=Calle+139+Sur+%2349-42,+Caldas,+Antioquia" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.7rem 0.8rem; background:#33ccff; color:#042f44; border-radius:var(--radius-md); font-size:0.8rem; font-weight:800; text-decoration:none; box-shadow:0 3px 10px rgba(51,204,255,0.3); text-align:center;">
+                        <i class="fa-brands fa-waze" style="font-size:1.05rem;"></i>
+                        <span>Abrir Waze</span>
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -430,6 +484,6 @@
 
     <!-- Scripts -->
     <script src="js/data.js?v=7.0"></script>
-    <script src="js/client-app.js?v=8.0"></script>
+    <script src="js/client-app.js?v=8.1"></script>
 </body>
 </html>

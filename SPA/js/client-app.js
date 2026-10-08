@@ -1003,6 +1003,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Copy Spa Address Action
+    document.getElementById('btn-copy-address')?.addEventListener('click', () => {
+        const address = 'Calle 139 Sur #49-42, Caldas, Antioquia';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = document.getElementById('btn-copy-address');
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> <span>¡Copiada!</span>';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                }
+            }).catch(() => {
+                prompt('Dirección del Spa:', address);
+            });
+        } else {
+            prompt('Dirección del Spa:', address);
+        }
+    });
+
     // Initial load: Clean guest state unless client specifically logs in
     updateAuthUI();
     switchTab('tab-explore');
