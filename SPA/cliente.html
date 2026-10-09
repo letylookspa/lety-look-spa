@@ -19,12 +19,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK (Cloud Database) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=4.0"></script>
     <!-- Client App Stylesheet -->
-    <link rel="stylesheet" href="css/client-app.css?v=7.3">
+    <link rel="stylesheet" href="css/client-app.css?v=8.0">
 </head>
 <body>
     <div class="mobile-app-container">
@@ -347,7 +343,12 @@
                             <label for="login-password">Contraseña</label>
                             <input type="password" id="login-password" class="client-form-input" placeholder="Tu contraseña" required>
                         </div>
-                        <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.5rem; padding:0.8rem;">
+                        <div style="display:flex; justify-content:flex-end; margin-top:-0.3rem; margin-bottom:1rem;">
+                            <button type="button" id="btn-forgot-password-link" style="background:none; border:none; color:var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:underline; padding:0;">
+                                ¿Olvidaste tu contraseña?
+                            </button>
+                        </div>
+                        <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.25rem; padding:0.8rem;">
                             <span>Ingresar</span>
                             <i class="fa-solid fa-arrow-right-to-bracket"></i>
                         </button>
@@ -386,6 +387,39 @@
                         <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.5rem; padding:0.8rem;">
                             <span>Registrarme y Acceder</span>
                             <i class="fa-solid fa-user-check"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Forgot Password Form -->
+                <div id="form-forgot-container" class="auth-card" style="display: none;">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+                        <button type="button" id="btn-back-to-login" style="background:none; border:none; font-size:1.1rem; color:var(--text-secondary); cursor:pointer; padding:0.2rem 0.5rem 0.2rem 0;">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h3 style="font-family:'Playfair Display', serif; font-size:1.3rem; margin:0;">Recuperar Contraseña</h3>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1.25rem;">Ingresa tu correo o celular registrado para definir una nueva contraseña.</p>
+                    
+                    <form id="client-forgot-form">
+                        <div class="client-form-group">
+                            <label for="forgot-identifier">Correo o Celular Registrado *</label>
+                            <input type="text" id="forgot-identifier" class="client-form-input" placeholder="ejemplo@gmail.com o 3001234567" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="forgot-new-password">Nueva Contraseña *</label>
+                            <input type="password" id="forgot-new-password" class="client-form-input" placeholder="Mínimo 4 caracteres" required>
+                        </div>
+                        <div class="client-form-group">
+                            <label for="forgot-confirm-password">Confirmar Nueva Contraseña *</label>
+                            <input type="password" id="forgot-confirm-password" class="client-form-input" placeholder="Repite tu nueva contraseña" required>
+                        </div>
+                        <button type="submit" class="btn-hero-book" style="width:100%; justify-content:center; margin-top:0.5rem; padding:0.8rem;">
+                            <span>Actualizar Contraseña e Ingresar</span>
+                            <i class="fa-solid fa-key"></i>
+                        </button>
+                        <button type="button" id="btn-cancel-forgot" style="width:100%; margin-top:0.75rem; background:none; border:none; color:var(--text-secondary); font-size:0.82rem; cursor:pointer; padding:0.4rem; text-decoration:underline;">
+                            Volver al inicio de sesión
                         </button>
                     </form>
                 </div>
@@ -483,7 +517,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/data.js?v=7.0"></script>
-    <script src="js/client-app.js?v=8.1"></script>
+    <script src="js/data.js?v=10.0"></script>
+    <script src="js/client-app.js?v=10.0"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
  * Data Storage & Seed Module for LETY LOOK SPA
  */
 
-const STORAGE_KEYS = {
+const STORAGE_KEYS = window.STORAGE_KEYS || {
     SERVICES: 'lety_look_services',
     STAFF: 'lety_look_staff',
     APPOINTMENTS: 'lety_look_appointments',
@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
     CLIENTS: 'lety_look_clients',
     CURRENT_CLIENT: 'lety_look_current_client'
 };
+window.STORAGE_KEYS = STORAGE_KEYS;
 
 const DEFAULT_CATEGORIES = [
     { id: 'manicura', name: 'Manicura', icon: 'fa-hand-sparkles', description: 'Cuidado, esculpido y diseño de uñas de manos' },
@@ -392,9 +393,6 @@ class SpaDataManager {
             services.push(service);
         }
         localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.saveCloudDocument('lety_look_services', service.id, service);
-        }
         return service;
     }
 
@@ -402,9 +400,6 @@ class SpaDataManager {
         let services = this.getServices();
         services = services.filter(s => s.id !== id);
         localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.deleteCloudDocument('lety_look_services', id);
-        }
         return true;
     }
 
@@ -431,9 +426,6 @@ class SpaDataManager {
             staff.push(staffMember);
         }
         localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staff));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.saveCloudDocument('lety_look_staff', staffMember.id, staffMember);
-        }
         return staffMember;
     }
 
@@ -441,9 +433,6 @@ class SpaDataManager {
         let staff = this.getStaff();
         staff = staff.filter(st => st.id !== id);
         localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staff));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.deleteCloudDocument('lety_look_staff', id);
-        }
         return true;
     }
 
@@ -451,7 +440,42 @@ class SpaDataManager {
     // CLIENT AUTHENTICATION & MANAGEMENT
     // ==========================================
     getClients() {
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
+        let clients = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
+        
+        // Auto-consolidate clients from appointments if any are missing
+        const appointments = JSON.parse(localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) || [];
+        let updated = false;
+
+        appointments.forEach(apt => {
+            if (!apt.clientName) return;
+            const cleanPhone = apt.clientPhone ? apt.clientPhone.replace(/\D/g, '') : '';
+            const cleanEmail = apt.clientEmail ? apt.clientEmail.trim().toLowerCase() : '';
+
+            const exists = clients.some(c => 
+                (c.id && apt.clientId && c.id === apt.clientId) ||
+                (cleanEmail && c.email && c.email.toLowerCase() === cleanEmail) ||
+                (cleanPhone && cleanPhone.length >= 7 && c.phone && c.phone.replace(/\D/g, '') === cleanPhone)
+            );
+
+            if (!exists) {
+                const newClient = {
+                    id: apt.clientId || ('cli-' + Date.now()),
+                    name: apt.clientName.trim(),
+                    email: cleanEmail,
+                    phone: cleanPhone || apt.clientPhone,
+                    createdAt: apt.date || new Date().toISOString(),
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(apt.clientName)}&background=d45979&color=fff&bold=true`
+                };
+                clients.push(newClient);
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+        }
+
+        return clients;
     }
 
     getClientById(id) {
@@ -497,9 +521,6 @@ class SpaDataManager {
         clients.push(newClient);
         localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
         this.setCurrentClient(newClient);
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.saveCloudDocument('lety_look_clients', newClient.id, newClient);
-        }
         return { success: true, client: newClient };
     }
 
@@ -514,6 +535,31 @@ class SpaDataManager {
 
         this.setCurrentClient(client);
         return { success: true, client };
+    }
+
+    resetClientPassword(identifier, newPassword) {
+        if (!identifier || !newPassword) {
+            return { success: false, message: 'Por favor completa todos los campos requeridos.' };
+        }
+        if (newPassword.length < 4) {
+            return { success: false, message: 'La nueva contraseña debe tener al menos 4 caracteres.' };
+        }
+
+        const client = this.getClientByEmailOrPhone(identifier);
+        if (!client) {
+            return { success: false, message: 'No encontramos ninguna cuenta con ese correo o número celular.' };
+        }
+
+        let clients = this.getClients();
+        const clientIndex = clients.findIndex(c => c.id === client.id);
+        if (clientIndex !== -1) {
+            clients[clientIndex].password = newPassword;
+            localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+            this.setCurrentClient(clients[clientIndex]);
+            return { success: true, client: clients[clientIndex], message: '¡Contraseña restablecida con éxito!' };
+        }
+
+        return { success: false, message: 'No fue posible actualizar la contraseña.' };
     }
 
     getCurrentClient() {
@@ -545,10 +591,6 @@ class SpaDataManager {
                 current.avatar = newAvatarUrl;
                 this.setCurrentClient(current);
             }
-
-            if (window.cloudService && window.cloudService.isInitialized) {
-                window.cloudService.saveCloudDocument('lety_look_clients', client.id, client);
-            }
             return { success: true, client };
         }
         return { success: false, message: 'Cliente no encontrado' };
@@ -558,9 +600,6 @@ class SpaDataManager {
         let clients = this.getClients();
         clients = clients.filter(c => c.id !== id);
         localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.deleteCloudDocument('lety_look_clients', id);
-        }
         return true;
     }
 
@@ -601,9 +640,32 @@ class SpaDataManager {
             appointments.unshift(appointment);
         }
         localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.saveCloudDocument('lety_look_appointments', appointment.id, appointment);
+
+        // Seamlessly register/save client in lety_look_clients if provided
+        if (appointment.clientName && (appointment.clientPhone || appointment.clientEmail)) {
+            const clients = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
+            const cleanPhone = appointment.clientPhone ? appointment.clientPhone.replace(/\D/g, '') : '';
+            const cleanEmail = appointment.clientEmail ? appointment.clientEmail.trim().toLowerCase() : '';
+            const exists = clients.some(c => 
+                (c.id && appointment.clientId && c.id === appointment.clientId) ||
+                (cleanEmail && c.email && c.email.toLowerCase() === cleanEmail) ||
+                (cleanPhone && cleanPhone.length >= 7 && c.phone && c.phone.replace(/\D/g, '') === cleanPhone)
+            );
+
+            if (!exists) {
+                const newClient = {
+                    id: appointment.clientId || ('cli-' + Date.now()),
+                    name: appointment.clientName.trim(),
+                    email: cleanEmail,
+                    phone: appointment.clientPhone || cleanPhone,
+                    createdAt: appointment.date || new Date().toISOString(),
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(appointment.clientName)}&background=d45979&color=fff&bold=true`
+                };
+                clients.push(newClient);
+                localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+            }
         }
+
         return appointment;
     }
 
@@ -613,9 +675,6 @@ class SpaDataManager {
         if (apt) {
             apt.status = status;
             localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-            if (window.cloudService && window.cloudService.isInitialized) {
-                window.cloudService.saveCloudDocument('lety_look_appointments', apt.id, apt);
-            }
             return apt;
         }
         return null;
@@ -625,9 +684,6 @@ class SpaDataManager {
         let appointments = this.getAppointments();
         appointments = appointments.filter(a => a.id !== id);
         localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.deleteCloudDocument('lety_look_appointments', id);
-        }
         return true;
     }
 
@@ -638,9 +694,6 @@ class SpaDataManager {
 
     saveSettings(settings) {
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-        if (window.cloudService && window.cloudService.isInitialized) {
-            window.cloudService.saveCloudDocument('lety_look', 'settings', settings);
-        }
         return settings;
     }
 

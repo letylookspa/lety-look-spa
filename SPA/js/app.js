@@ -1504,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 7. SETTINGS & DATA CONTROLLER (WITH CLOUD FIREBASE)
+    // 7. SETTINGS & DATA CONTROLLER (GITHUB PAGES)
     // =========================================================================
     function renderSettings() {
         const settings = window.dataManager.getSettings();
@@ -1514,81 +1514,84 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('settings-spa-address').value = settings.address || '';
         document.getElementById('settings-open-time').value = settings.openTime || '08:00';
         document.getElementById('settings-close-time').value = settings.closeTime || '20:00';
-
-        // Firebase Cloud Status
-        updateCloudStatusBadge();
     }
 
-    function updateCloudStatusBadge() {
-        const badge = document.getElementById('cloud-status-badge');
-        const configTextarea = document.getElementById('firebase-config-json');
-        if (!badge) return;
-
-        if (window.cloudService && window.cloudService.isInitialized) {
-            badge.className = 'status-badge status-confirmed';
-            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Conectado a la Nube';
-        } else {
-            badge.className = 'status-badge status-pending';
-            badge.innerHTML = '<i class="fa-solid fa-cloud"></i> Modo Local (Sin Conectar)';
-        }
-
-        const currentConfig = window.cloudService ? window.cloudService.getConfig() : null;
-        if (currentConfig && configTextarea && !configTextarea.value) {
-            configTextarea.value = JSON.stringify(currentConfig, null, 2);
-        }
-    }
-
-    document.getElementById('firebase-config-form')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const rawJson = document.getElementById('firebase-config-json').value.trim();
-        if (!rawJson) {
-            showToast('Por favor ingresa la configuración de Firebase', 'error');
-            return;
-        }
-
+    // Export Complete JSON Backup for GitHub repository / storage
+    document.getElementById('btn-export-backup')?.addEventListener('click', () => {
         try {
-            let configObj = null;
-            if (rawJson.startsWith('{')) {
-                configObj = JSON.parse(rawJson);
-            } else {
-                // If pasted as JS object string
-                const sanitized = rawJson.replace(/([a-zA-Z0-9]+)\s*:/g, '"$1":').replace(/'/g, '"');
-                configObj = JSON.parse(sanitized);
-            }
+            const backupData = {
+                exportedAt: new Date().toISOString(),
+                version: '10.0',
+                platform: 'GitHub Pages',
+                services: window.dataManager.getServices(),
+                staff: window.dataManager.getStaff(),
+                appointments: window.dataManager.getAppointments(),
+                settings: window.dataManager.getSettings(),
+                clients: window.dataManager.getClients()
+            };
 
-            const res = window.cloudService.saveConfig(configObj);
-            if (res.success) {
-                showToast('¡Conectado exitosamente a Google Firebase Cloud!');
-                updateCloudStatusBadge();
-            } else {
-                showToast(res.message, 'error');
-            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const dlAnchor = document.createElement('a');
+            const dateStr = new Date().toISOString().slice(0, 10);
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `lety-look-github-backup-${dateStr}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+
+            showToast('¡Copia de seguridad para GitHub descargada con éxito!');
         } catch (err) {
-            showToast('Formato JSON inválido. Verifica las llaves y comillas.', 'error');
+            console.error('Error exporting backup:', err);
+            showToast('Error al exportar la copia de seguridad', 'error');
         }
     });
 
-    document.getElementById('btn-upload-to-cloud')?.addEventListener('click', async () => {
-        if (!window.cloudService || !window.cloudService.isInitialized) {
-            showToast('Primero debes guardar y conectar tu configuración de Firebase', 'error');
-            return;
-        }
-        showToast('Subiendo datos a la nube de Google Firebase...', 'info');
-        const res = await window.cloudService.uploadAllLocalDataToCloud();
-        if (res.success) {
-            showToast(res.message);
-        } else {
-            showToast(res.message, 'error');
-        }
+    // Trigger Import Backup Dialog
+    document.getElementById('btn-import-backup')?.addEventListener('click', () => {
+        document.getElementById('input-import-backup')?.click();
     });
 
-    // Real-time Cloud Listener: Re-render UI when cloud changes arrive
-    if (window.cloudService) {
-        window.cloudService.onSync((collectionName) => {
-            console.log(`Cloud sync event received for: ${collectionName}`);
-            renderCurrentView();
-        });
-    }
+    // Handle Import Backup File
+    document.getElementById('input-import-backup')?.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const imported = JSON.parse(event.target.result);
+                if (!imported || typeof imported !== 'object') {
+                    throw new Error('Formato inválido');
+                }
+
+                if (confirm('¿Deseas restaurar esta copia de seguridad? Se actualizarán los datos actuales con los del archivo.')) {
+                    if (Array.isArray(imported.services)) {
+                        localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(imported.services));
+                    }
+                    if (Array.isArray(imported.staff)) {
+                        localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(imported.staff));
+                    }
+                    if (Array.isArray(imported.appointments)) {
+                        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(imported.appointments));
+                    }
+                    if (imported.settings && typeof imported.settings === 'object') {
+                        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(imported.settings));
+                    }
+                    if (Array.isArray(imported.clients)) {
+                        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(imported.clients));
+                    }
+
+                    showToast('¡Copia de seguridad restaurada exitosamente!');
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            } catch (err) {
+                console.error('Error parsing JSON backup:', err);
+                showToast('Archivo JSON inválido o dañado.', 'error');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    });
 
     document.getElementById('spa-settings-form')?.addEventListener('submit', (e) => {
         e.preventDefault();

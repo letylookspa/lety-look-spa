@@ -13,11 +13,7 @@
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Stylesheet -->
-    <link rel="stylesheet" href="css/styles.css?v=5.1">
-    <!-- Firebase SDK (Cloud Database) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=5.0"></script>
+    <link rel="stylesheet" href="css/styles.css?v=6.0">
 </head>
 <body>
     <!-- Admin Security Gate / Lock Screen -->
@@ -500,39 +496,36 @@
                             </form>
                         </div>
 
-                        <!-- Firebase Cloud Database Setup Card -->
+                        <!-- GitHub Pages Hosting & Backup Card -->
                         <div class="dash-card" style="border: 2px solid var(--primary-light);">
                             <div class="dash-card-header" style="display:flex; justify-content:space-between; align-items:center;">
                                 <div>
                                     <h3 style="display:flex; align-items:center; gap:0.5rem;">
-                                        <i class="fa-solid fa-cloud" style="color:var(--primary);"></i>
-                                        <span>Base de Datos en la Nube (Google Firebase)</span>
+                                        <i class="fa-brands fa-github" style="color:#24292f; font-size:1.4rem;"></i>
+                                        <span>Alojamiento y Respaldo en GitHub Pages</span>
                                     </h3>
-                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Sincronización en tiempo real entre todos los celulares y computadores sin perder datos</p>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted);">Aplicación web progresiva (PWA) de alta velocidad alojada en GitHub</p>
                                 </div>
-                                <span id="cloud-status-badge" class="status-badge status-pending" style="font-size:0.75rem;">Modo Local Activo</span>
+                                <span id="github-status-badge" class="status-badge" style="font-size:0.75rem; background:#24292f; color:#fff; display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.75rem; border-radius:999px;">
+                                    <i class="fa-brands fa-github"></i> Alojado en GitHub Pages
+                                </span>
                             </div>
                             
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4;">
-                                Conecta tu proyecto gratuito de <strong>Google Firebase Firestore</strong> para que todas las citas, clientes y servicios se guarden en la nube permanentemente y nunca se borren aunque se limpien las cookies del navegador.
+                                Tu sistema está funcionando alojado en <strong>GitHub Pages</strong>. La información de citas, servicios y clientes se procesa con alta velocidad en memoria local. Puedes generar y descargar copias de respaldo en formato JSON para archivarlas en tu repositorio de GitHub o sincronizar datos:
                             </p>
 
-                            <form id="firebase-config-form">
-                                <div class="form-group" style="margin-bottom:1rem;">
-                                    <label for="firebase-config-json" style="font-size:0.82rem; font-weight:700;">Pega aquí la Configuración de Firebase (JSON o SDK config):</label>
-                                    <textarea id="firebase-config-json" class="form-control" rows="4" style="font-family:monospace; font-size:0.8rem;" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "lety-look.firebaseapp.com",\n  "projectId": "lety-look",\n  "storageBucket": "lety-look.appspot.com",\n  "messagingSenderId": "...",\n  "appId": "..."\n}'></textarea>
-                                </div>
-                                <div style="display:flex; gap:0.75rem; justify-content:flex-end; flex-wrap:wrap;">
-                                    <button type="button" id="btn-upload-to-cloud" class="btn-secondary" style="color:var(--primary); border-color:var(--primary);">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                                        <span>Subir Toda la Base de Datos a la Nube</span>
-                                    </button>
-                                    <button type="submit" class="btn-primary">
-                                        <i class="fa-solid fa-link"></i>
-                                        <span>Guardar y Conectar Firebase</span>
-                                    </button>
-                                </div>
-                            </form>
+                            <div style="display:flex; gap:0.75rem; justify-content:flex-end; flex-wrap:wrap;">
+                                <input type="file" id="input-import-backup" accept=".json" style="display:none;">
+                                <button type="button" id="btn-import-backup" class="btn-secondary" style="color:var(--text-main); border-color:var(--border-color);">
+                                    <i class="fa-solid fa-file-import"></i>
+                                    <span>Importar Copia de Seguridad JSON</span>
+                                </button>
+                                <button type="button" id="btn-export-backup" class="btn-primary" style="background:#24292f; border-color:#24292f;">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span>Descargar Respaldo JSON (Para GitHub)</span>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- APK Android Card -->
@@ -847,7 +840,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="js/data.js?v=7.0"></script>
-    <script src="js/app.js?v=8.0"></script>
+    <script src="js/data.js?v=10.0"></script>
+    <script src="js/app.js?v=10.0"></script>
 </body>
 </html>

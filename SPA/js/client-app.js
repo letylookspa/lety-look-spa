@@ -819,21 +819,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Segmented tab switch between Login and Register
-    document.getElementById('btn-tab-login')?.addEventListener('click', () => {
-        document.getElementById('btn-tab-login').classList.add('active');
-        document.getElementById('btn-tab-register').classList.remove('active');
+    function showLoginForm() {
+        document.getElementById('btn-tab-login')?.classList.add('active');
+        document.getElementById('btn-tab-register')?.classList.remove('active');
         document.getElementById('form-login-container').style.display = 'block';
         document.getElementById('form-register-container').style.display = 'none';
+        const forgotEl = document.getElementById('form-forgot-container');
+        if (forgotEl) forgotEl.style.display = 'none';
         document.getElementById('auth-error-box').style.display = 'none';
-    });
+    }
 
-    document.getElementById('btn-tab-register')?.addEventListener('click', () => {
-        document.getElementById('btn-tab-register').classList.add('active');
-        document.getElementById('btn-tab-login').classList.remove('active');
+    function showRegisterForm() {
+        document.getElementById('btn-tab-register')?.classList.add('active');
+        document.getElementById('btn-tab-login')?.classList.remove('active');
         document.getElementById('form-login-container').style.display = 'none';
         document.getElementById('form-register-container').style.display = 'block';
+        const forgotEl = document.getElementById('form-forgot-container');
+        if (forgotEl) forgotEl.style.display = 'none';
         document.getElementById('auth-error-box').style.display = 'none';
-    });
+    }
+
+    function showForgotForm() {
+        document.getElementById('btn-tab-login')?.classList.remove('active');
+        document.getElementById('btn-tab-register')?.classList.remove('active');
+        document.getElementById('form-login-container').style.display = 'none';
+        document.getElementById('form-register-container').style.display = 'none';
+        const forgotEl = document.getElementById('form-forgot-container');
+        if (forgotEl) forgotEl.style.display = 'block';
+        document.getElementById('auth-error-box').style.display = 'none';
+    }
+
+    document.getElementById('btn-tab-login')?.addEventListener('click', showLoginForm);
+    document.getElementById('btn-tab-register')?.addEventListener('click', showRegisterForm);
+    document.getElementById('btn-forgot-password-link')?.addEventListener('click', showForgotForm);
+    document.getElementById('btn-back-to-login')?.addEventListener('click', showLoginForm);
+    document.getElementById('btn-cancel-forgot')?.addEventListener('click', showLoginForm);
 
     // Image compression utility
     function compressImageFile(file, maxWidth = 250, maxHeight = 250, quality = 0.85) {
@@ -955,6 +975,45 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAuthUI();
             alert(`¡Bienvenida a LETY LOOK, ${name.split(' ')[0]}! Tu cuenta ha sido creada con éxito.`);
             switchTab('tab-explore');
+        } else {
+            errorBox.textContent = result.message;
+            errorBox.style.display = 'block';
+        }
+    });
+
+    // Forgot Password Form Submit
+    document.getElementById('client-forgot-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const identifier = document.getElementById('forgot-identifier').value.trim();
+        const newPassword = document.getElementById('forgot-new-password').value;
+        const confirmPassword = document.getElementById('forgot-confirm-password').value;
+        const errorBox = document.getElementById('auth-error-box');
+
+        if (!identifier || !newPassword || !confirmPassword) {
+            errorBox.textContent = 'Por favor completa todos los campos requeridos.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        if (newPassword.length < 4) {
+            errorBox.textContent = 'La nueva contraseña debe tener mínimo 4 caracteres.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            errorBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        const result = window.dataManager.resetClientPassword(identifier, newPassword);
+        if (result.success) {
+            errorBox.style.display = 'none';
+            document.getElementById('client-forgot-form').reset();
+            updateAuthUI();
+            alert(`¡Contraseña restablecida con éxito! Bienvenida de nuevo, ${result.client.name.split(' ')[0]}.`);
+            switchTab('tab-my-appointments');
         } else {
             errorBox.textContent = result.message;
             errorBox.style.display = 'block';
