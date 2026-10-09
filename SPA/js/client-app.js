@@ -927,21 +927,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Login Form Submit
-    document.getElementById('client-login-form')?.addEventListener('submit', (e) => {
+    document.getElementById('client-login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const identifier = document.getElementById('login-identifier').value.trim();
         const password = document.getElementById('login-password').value;
         const errorBox = document.getElementById('auth-error-box');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
 
-        const result = window.dataManager.loginClient(identifier, password);
-        if (result.success) {
-            errorBox.style.display = 'none';
-            document.getElementById('client-login-form').reset();
-            updateAuthUI();
-            switchTab('tab-my-appointments');
-        } else {
-            errorBox.textContent = result.message;
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Verificando...</span>';
+        }
+
+        try {
+            const result = await window.dataManager.loginClient(identifier, password);
+            if (result.success) {
+                errorBox.style.display = 'none';
+                document.getElementById('client-login-form').reset();
+                updateAuthUI();
+                switchTab('tab-my-appointments');
+            } else {
+                errorBox.textContent = result.message;
+                errorBox.style.display = 'block';
+            }
+        } catch (err) {
+            errorBox.textContent = 'Error al conectar con el servidor. Intenta de nuevo.';
             errorBox.style.display = 'block';
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 
@@ -982,12 +999,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Forgot Password Form Submit
-    document.getElementById('client-forgot-form')?.addEventListener('submit', (e) => {
+    document.getElementById('client-forgot-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const identifier = document.getElementById('forgot-identifier').value.trim();
         const newPassword = document.getElementById('forgot-new-password').value;
         const confirmPassword = document.getElementById('forgot-confirm-password').value;
         const errorBox = document.getElementById('auth-error-box');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
 
         if (!identifier || !newPassword || !confirmPassword) {
             errorBox.textContent = 'Por favor completa todos los campos requeridos.';
@@ -1007,16 +1025,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const result = window.dataManager.resetClientPassword(identifier, newPassword);
-        if (result.success) {
-            errorBox.style.display = 'none';
-            document.getElementById('client-forgot-form').reset();
-            updateAuthUI();
-            alert(`¡Contraseña restablecida con éxito! Bienvenida de nuevo, ${result.client.name.split(' ')[0]}.`);
-            switchTab('tab-my-appointments');
-        } else {
-            errorBox.textContent = result.message;
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Buscando cuenta...</span>';
+        }
+
+        try {
+            const result = await window.dataManager.resetClientPassword(identifier, newPassword);
+            if (result.success) {
+                errorBox.style.display = 'none';
+                document.getElementById('client-forgot-form').reset();
+                updateAuthUI();
+                alert(`¡Contraseña restablecida con éxito! Bienvenida de nuevo, ${result.client.name.split(' ')[0]}.`);
+                switchTab('tab-my-appointments');
+            } else {
+                errorBox.textContent = result.message;
+                errorBox.style.display = 'block';
+            }
+        } catch (err) {
+            errorBox.textContent = 'Error al conectar con la base de datos. Intenta de nuevo.';
             errorBox.style.display = 'block';
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     });
 
@@ -1045,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Live sync theme if admin changes it in real time via Cloud Firestore
+    // Live sync when Firestore updates in real time
     if (window.cloudService) {
         window.cloudService.onSync((collectionName) => {
             if (collectionName === 'settings') {
@@ -1057,6 +1091,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } catch (e) {
                     console.log('Error updating live theme:', e);
+                }
+            } else if (collectionName === 'clients') {
+                updateAuthUI();
+                if (clientState.currentTab === 'tab-account') {
+                    renderAccountTab();
+                }
+            } else if (collectionName === 'appointments') {
+                if (clientState.currentTab === 'tab-my-appointments') {
+                    renderMyAppointments();
                 }
             }
         });

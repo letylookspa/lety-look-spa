@@ -1,6 +1,6 @@
 /**
- * LETY LOOK SPA - Google Firebase Cloud Database Service
- * Connected to project: letylookspa
+ * LETY LOOK SPA - Cloud Database Sync Service (Firebase Firestore)
+ * Alojado en GitHub Pages con Base de Datos en la Nube Firebase (letylookspa)
  */
 
 const DEFAULT_FIREBASE_CONFIG = {
@@ -14,6 +14,16 @@ const DEFAULT_FIREBASE_CONFIG = {
 };
 
 const FIREBASE_CONFIG_KEY = 'lety_look_firebase_config';
+
+const STORAGE_KEYS = window.STORAGE_KEYS || {
+    SERVICES: 'lety_look_services',
+    STAFF: 'lety_look_staff',
+    APPOINTMENTS: 'lety_look_appointments',
+    SETTINGS: 'lety_look_settings',
+    CLIENTS: 'lety_look_clients',
+    CURRENT_CLIENT: 'lety_look_current_client'
+};
+window.STORAGE_KEYS = STORAGE_KEYS;
 
 class FirebaseCloudService {
     constructor() {
@@ -56,9 +66,9 @@ class FirebaseCloudService {
             }
             this.db = firebase.firestore();
             this.isInitialized = true;
-            this.setupRealtimeSync();
-            this.checkAndSeedCloudDatabase();
-            return { success: true, message: '¡Conectado exitosamente a Google Firebase Cloud (letylookspa)!' };
+            this.setupRealtimeListeners();
+            console.log('Firebase Cloud Service initialized successfully with Firestore (letylookspa).');
+            return { success: true, message: '¡Conectado exitosamente a la base de datos en la nube!' };
         } catch (error) {
             console.error('Error initializing Firebase:', error);
             this.isInitialized = false;
@@ -73,162 +83,168 @@ class FirebaseCloudService {
     }
 
     triggerSync(collectionName) {
-        this.onSyncCallbacks.forEach(cb => cb(collectionName));
+        this.onSyncCallbacks.forEach(cb => {
+            try { cb(collectionName); } catch (e) { console.error('Sync callback error:', e); }
+        });
     }
 
-    setupRealtimeSync() {
-        if (!this.isInitialized || !this.db) return;
+    setupRealtimeListeners() {
+        if (!this.db) return;
 
-        // 1. Sync Settings
+        // 1. Sync Services
+        this.db.collection('lety_look_services').onSnapshot(snapshot => {
+            const cloudItems = [];
+            snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
+            if (cloudItems.length > 0) {
+                localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(cloudItems));
+                this.triggerSync('services');
+            }
+        }, err => console.log('Firestore services sync error:', err));
+
+        // 2. Sync Staff
+        this.db.collection('lety_look_staff').onSnapshot(snapshot => {
+            const cloudItems = [];
+            snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
+            if (cloudItems.length > 0) {
+                localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(cloudItems));
+                this.triggerSync('staff');
+            }
+        }, err => console.log('Firestore staff sync error:', err));
+
+        // 3. Sync Appointments
+        this.db.collection('lety_look_appointments').onSnapshot(snapshot => {
+            const cloudItems = [];
+            snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
+            if (cloudItems.length > 0) {
+                // Preserve local appointments not yet in cloud
+                const local = JSON.parse(localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) || [];
+                const mergedMap = new Map();
+                local.forEach(a => mergedMap.set(a.id, a));
+                cloudItems.forEach(a => mergedMap.set(a.id, a));
+                const merged = Array.from(mergedMap.values());
+                localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(merged));
+                this.triggerSync('appointments');
+            }
+        }, err => console.log('Firestore appointments sync error:', err));
+
+        // 4. Sync Settings
         this.db.collection('lety_look').doc('settings').onSnapshot(doc => {
             if (doc.exists) {
                 const cloudSettings = doc.data();
-                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(cloudSettings));
+                const localSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({ ...localSettings, ...cloudSettings }));
                 this.triggerSync('settings');
             }
-        }, err => console.log('Firestore settings listener error:', err));
+        }, err => console.log('Firestore settings sync error:', err));
 
-        // 2. Sync Services
-        this.db.collection('lety_look_services').onSnapshot(snapshot => {
-            if (!snapshot.empty) {
-                const services = [];
-                snapshot.forEach(doc => services.push({ id: doc.id, ...doc.data() }));
-                if (services.length > 0) {
-                    localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-                    this.triggerSync('services');
-                }
-            }
-        }, err => console.log('Firestore services listener error:', err));
-
-        // 3. Sync Staff
-        this.db.collection('lety_look_staff').onSnapshot(snapshot => {
-            if (!snapshot.empty) {
-                const staff = [];
-                snapshot.forEach(doc => staff.push({ id: doc.id, ...doc.data() }));
-                if (staff.length > 0) {
-                    localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staff));
-                    this.triggerSync('staff');
-                }
-            }
-        }, err => console.log('Firestore staff listener error:', err));
-
-        // 4. Sync Appointments (Real-time live bookings from any phone)
-        this.db.collection('lety_look_appointments').onSnapshot(snapshot => {
-            if (!snapshot.empty) {
-                const appointments = [];
-                snapshot.forEach(doc => appointments.push({ id: doc.id, ...doc.data() }));
-                localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-                this.triggerSync('appointments');
-            }
-        }, err => console.log('Firestore appointments listener error:', err));
-
-        // 5. Sync Clients
+        // 5. Sync Clients (Crucial: download all cloud clients to localStorage immediately)
         this.db.collection('lety_look_clients').onSnapshot(snapshot => {
-            if (!snapshot.empty) {
-                const clients = [];
-                snapshot.forEach(doc => clients.push({ id: doc.id, ...doc.data() }));
-                localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
-                this.triggerSync('clients');
+            const cloudClients = [];
+            snapshot.forEach(doc => cloudClients.push({ id: doc.id, ...doc.data() }));
+            
+            const localClients = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
+            const mergedMap = new Map();
+            
+            // Retain local clients
+            localClients.forEach(c => {
+                if (c && c.id) mergedMap.set(c.id, c);
+            });
+            // Cloud clients take precedence (including updated passwords)
+            cloudClients.forEach(c => {
+                if (c && c.id) mergedMap.set(c.id, c);
+            });
+
+            const merged = Array.from(mergedMap.values());
+            localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(merged));
+
+            // Refresh CURRENT_CLIENT if currently logged in user was modified in cloud!
+            const currentRaw = localStorage.getItem(STORAGE_KEYS.CURRENT_CLIENT);
+            if (currentRaw) {
+                try {
+                    const current = JSON.parse(currentRaw);
+                    const freshClient = merged.find(c => c.id === current.id || (c.email && c.email.toLowerCase() === (current.email || '').toLowerCase()));
+                    if (freshClient) {
+                        localStorage.setItem(STORAGE_KEYS.CURRENT_CLIENT, JSON.stringify(freshClient));
+                    }
+                } catch (e) {}
             }
-        }, err => console.log('Firestore clients listener error:', err));
+
+            // Auto-upload any local clients not yet in cloud
+            localClients.forEach(c => {
+                if (c && c.id && !cloudClients.some(cc => cc.id === c.id)) {
+                    this.saveCloudDocument('lety_look_clients', c.id, c);
+                }
+            });
+
+            this.triggerSync('clients');
+        }, err => console.log('Firestore clients sync error:', err));
     }
 
-    async saveCloudDocument(collection, id, data) {
-        if (!this.isInitialized || !this.db) return false;
+    async saveCloudDocument(collectionName, docId, data) {
+        if (!this.db || !this.isInitialized) return false;
         try {
-            const cleanData = { ...data };
-            delete cleanData.id;
-            await this.db.collection(collection).doc(id).set(cleanData, { merge: true });
+            await this.db.collection(collectionName).doc(docId).set(data, { merge: true });
             return true;
-        } catch (e) {
-            console.error(`Error saving to Firestore [${collection}]:`, e);
+        } catch (error) {
+            console.error(`Error saving cloud document in ${collectionName}/${docId}:`, error);
             return false;
         }
     }
 
-    async deleteCloudDocument(collection, id) {
-        if (!this.isInitialized || !this.db) return false;
+    async deleteCloudDocument(collectionName, docId) {
+        if (!this.db || !this.isInitialized) return false;
         try {
-            await this.db.collection(collection).doc(id).delete();
+            await this.db.collection(collectionName).doc(docId).delete();
             return true;
-        } catch (e) {
-            console.error(`Error deleting from Firestore [${collection}]:`, e);
+        } catch (error) {
+            console.error(`Error deleting cloud document in ${collectionName}/${docId}:`, error);
             return false;
-        }
-    }
-
-    async checkAndSeedCloudDatabase() {
-        if (!this.isInitialized || !this.db) return;
-        try {
-            const servicesDoc = await this.db.collection('lety_look_services').limit(1).get();
-            if (servicesDoc.empty) {
-                console.log('Seeding initial data into cloud Firestore...');
-                await this.uploadAllLocalDataToCloud();
-            }
-        } catch (e) {
-            console.log('Error checking cloud database seed status:', e);
         }
     }
 
     async uploadAllLocalDataToCloud() {
-        if (!this.isInitialized || !this.db) {
-            return { success: false, message: 'Firebase no inicializado.' };
+        if (!this.db || !this.isInitialized) {
+            return { success: false, message: 'La base de datos en la nube no está inicializada.' };
         }
 
         try {
+            const batch = this.db.batch();
             const services = JSON.parse(localStorage.getItem(STORAGE_KEYS.SERVICES)) || [];
             const staff = JSON.parse(localStorage.getItem(STORAGE_KEYS.STAFF)) || [];
             const appointments = JSON.parse(localStorage.getItem(STORAGE_KEYS.APPOINTMENTS)) || [];
-            const clients = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
             const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS)) || {};
+            const clients = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTS)) || [];
 
-            const batch = this.db.batch();
-
-            // Settings
-            const settingsRef = this.db.collection('lety_look').doc('settings');
-            batch.set(settingsRef, settings);
-
-            // Services
             services.forEach(s => {
                 const ref = this.db.collection('lety_look_services').doc(s.id);
-                const data = { ...s };
-                delete data.id;
-                batch.set(ref, data);
+                batch.set(ref, s, { merge: true });
             });
 
-            // Staff
             staff.forEach(st => {
                 const ref = this.db.collection('lety_look_staff').doc(st.id);
-                const data = { ...st };
-                delete data.id;
-                batch.set(ref, data);
+                batch.set(ref, st, { merge: true });
             });
 
-            // Appointments
             appointments.forEach(a => {
                 const ref = this.db.collection('lety_look_appointments').doc(a.id);
-                const data = { ...a };
-                delete data.id;
-                batch.set(ref, data);
+                batch.set(ref, a, { merge: true });
             });
 
-            // Clients
+            const settingsRef = this.db.collection('lety_look').doc('settings');
+            batch.set(settingsRef, settings, { merge: true });
+
             clients.forEach(c => {
                 const ref = this.db.collection('lety_look_clients').doc(c.id);
-                const data = { ...c };
-                delete data.id;
-                batch.set(ref, data);
+                batch.set(ref, c, { merge: true });
             });
 
             await batch.commit();
-            console.log('All local data backed up to cloud Firestore!');
-            return { success: true, message: '¡Toda la base de datos se ha respaldado y conectado a la nube con éxito!' };
-        } catch (e) {
-            console.error('Error uploading local data to cloud:', e);
-            return { success: false, message: 'Error al subir datos: ' + e.message };
+            return { success: true, message: '¡Datos locales sincronizados exitosamente con la nube de Firebase!' };
+        } catch (error) {
+            console.error('Batch sync error:', error);
+            return { success: false, message: 'Error al sincronizar con la nube: ' + error.message };
         }
     }
 }
 
-// Global Cloud Instance
 window.cloudService = new FirebaseCloudService();

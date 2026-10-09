@@ -2,7 +2,7 @@
  * LETY LOOK SPA - Service Worker (Network-First Auto-Update Strategy)
  */
 
-const CACHE_NAME = 'lety-look-spa-v11';
+const CACHE_NAME = 'lety-look-spa-v13';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
